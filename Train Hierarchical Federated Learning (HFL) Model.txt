@@ -1,0 +1,39 @@
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+
+# Convert Date into numerical format (days since start)
+df_combined["Days"] = (df_combined["Date"] - df_combined["Date"].min()).dt.days
+
+# Split data by location (each location acts as a local FL node)
+locations = df_combined["Location"].unique()
+local_models = {}
+local_mae = {}
+
+for location in locations:
+    # Extract data for this location
+    df_local = df_combined[df_combined["Location"] == location]
+
+    # Prepare features and target variable
+    X = df_local[["Days"]].values  # Using time progression as the only feature for simplicity
+    y = df_local["Pollution Value"].values
+
+    # Split into training and testing
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Train a local model (Linear Regression for simplicity)
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    # Evaluate model
+    y_pred = model.predict(X_test)
+    mae = mean_absolute_error(y_test, y_pred)
+
+    # Store results
+    local_models[location] = model
+    local_mae[location] = mae
+
+# Aggregate MAE across all locations (Baseline FL Model)
+baseline_mae = np.mean(list(local_mae.values()))
+baseline_mae

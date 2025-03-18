@@ -1,0 +1,35 @@
+from collections import defaultdict
+
+# Simulating local fog node aggregation before sending to the cloud
+fog_nodes = {
+    "Fog_Node_1": ["Danapur", "Muradpur"],
+    "Fog_Node_2": ["Planetarium", "Rajbansi"],
+    "Fog_Node_3": ["Samanpura", "Shikarpur"]
+}
+
+fog_models = {}
+fog_mae = {}
+
+for fog_node, locations in fog_nodes.items():
+    # Collect local models and their errors
+    local_weights = []
+    local_errors = []
+    
+    for location in locations:
+        model = local_models[location]
+        mae = local_mae[location]
+        
+        # Weighting based on inverse MAE (better models get higher weight)
+        weight = 1 / (mae + 1e-5)
+        local_weights.append(weight)
+        local_errors.append(mae)
+
+    # Compute weighted aggregated MAE for the fog node
+    total_weight = sum(local_weights)
+    aggregated_mae = sum((w / total_weight) * e for w, e in zip(local_weights, local_errors))
+    
+    fog_mae[fog_node] = aggregated_mae
+
+# Cloud server aggregates fog nodes (final aggregation step)
+final_mae = np.mean(list(fog_mae.values()))
+final_mae
